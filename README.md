@@ -1,2 +1,2 @@
 # django_celery_snippet
-Basic Django celery project structure
+Basic Django-celery with flower monitoring project structure
