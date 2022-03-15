@@ -1,0 +1,46 @@
+import json
+import random
+
+import requests
+from celery import shared_task
+from celery.signals import task_postrun
+from polls.consumers import notify_channel_layer
+from celery.utils.log import get_task_logger
+
+logger = get_task_logger(__name__)
+
+
+@shared_task()
+def sample_task(email):
+    from polls.views import api_call
+
+    api_call(email)
+
+
+@shared_task(bind=True)
+def task_process_notification(self):
+    try:
+        if not random.choice([0,1]):
+            # mimic random error
+            raise Exception('a error in testing')
+
+        # this would block the I/O
+        requests.post('https://httpbin/delay/5')
+    except Exception as e:
+        logger.error('exception raised, it would be retry after 5 seconds')
+        raise self.retry(exc=e, countdown=5)
+
+
+@task_postrun.connect
+def task_postrun_handler(task_id, **kwargs):
+    """
+    When celery task finish, send notification to Django channel_layer, so Django channel
+    would receive the event and send it to wenclient.
+    """
+    notify_channel_layer(task_id)
+
+
+@shared_task(name='task_clear_session')
+def task_clear_session():
+    from django.core.management import call_command
+    call_command('clearsessions')

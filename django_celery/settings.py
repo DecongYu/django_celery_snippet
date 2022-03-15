@@ -28,14 +28,22 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # Django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Third party apps
     'redis',
     'celery',
+    'django_celery_beat',
+    'crispy_forms',
+    'channels',
+
+    # Local apps
     'polls',
 ]
 
@@ -67,7 +75,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'django_celery.wsgi.application'
+# WSGI_APPLICATION = 'django_celery.wsgi.application'
+ASGI_APPLICATION = 'django_celery.asgi.application'
 
 
 # Database
@@ -93,6 +102,8 @@ DATABASES = {
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://127.0.0.1:6379/0")
+# celery worker setting True=synchronously, Fasl=asynchronously (default)
+# CELERY_TASK_ALWAYS_EAGER = True
 
 
 # Password validation
@@ -139,3 +150,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # celery settings for redis usage since celery shares this same settting with Django
 # CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 # CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(os.environ.get("CHANNELS_REDIS", "redis://127.0.0.1:6379/0"))],
+        },
+    },
+}
+
+CELERY_BEAT_SCHEDULE = {
+    # 'task_clear_session': {
+    #     'task': 'task_clear_session',
+    #     'schedule': 15, # five seconds
+    # }
+}

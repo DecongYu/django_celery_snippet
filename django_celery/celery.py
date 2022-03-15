@@ -6,7 +6,11 @@ https://docs.celeryproject.org/en/stable/django/first-steps-with-django.html
 
 import os
 from celery import Celery
+from celery.signals import task_postrun
 from django.conf import settings
+
+from polls.consumers import notify_channel_layer
+
 
 
 # this code copied from manage.py
@@ -25,13 +29,19 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 # test
 @app.task
 def divide(x, y):
+    # # debug tool rdb to set up breaking point
+    # from celery.contrib import rdb
+    # rdb.set_trace()
+
+    # task
     import time
     time.sleep(5)
     return x / y
 
-@app.task
-def add(x,y):
-    import time
-    time.sleep(8)
-    return x + y
-
+@task_postrun.connect
+def task_postrun_handler(task_id, **kwargs):
+    """
+    When celery task finish, send notification to Django Channel_layer, so Django channel would 
+    recieve the event and send it to the web client
+    """
+    notify_channel_layer(task_id)
