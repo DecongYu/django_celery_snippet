@@ -1,4 +1,4 @@
-### django_celery_snippet
+## django_celery_snippet
 (This piece is meant for self-usage)
 * Basic Django-celery with flower monitoring project structure. Celery, Django, Redis Django-channels, Django-Celery-beat are dockerized
 * Celery worker change reload
