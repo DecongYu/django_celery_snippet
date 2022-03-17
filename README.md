@@ -11,7 +11,7 @@ docker-compose exec <docker-service-name> bash
 ```bash
 ./manage.py shell
 ```
-OR
+or
 ```bash
 docker-compose exec <docker-service-name> python manage.py shell
 ```
