@@ -14,6 +14,7 @@ docker-compose exec <docker-service-name> bash
 OR
 ```bash
 docker-compose exec <docker-service-name> python manage.py shell
+```
 ```bash
 <clery_task>.delay()
 ```
