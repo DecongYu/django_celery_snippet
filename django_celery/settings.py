@@ -7,6 +7,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
 from pathlib import Path
+from kombu import Queue
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -100,6 +101,9 @@ DATABASES = {
     }
 }
 
+# https://docs.djangoproject.com/en/dev/ref/settings/#databases
+DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_BACKEND", "redis://127.0.0.1:6379/0")
 # celery worker setting True=synchronously, Fasl=asynchronously (default)
@@ -160,9 +164,42 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+# task schduler
 CELERY_BEAT_SCHEDULE = {
     # 'task_clear_session': {
     #     'task': 'task_clear_session',
     #     'schedule': 15, # five seconds
-    # }
+    # },
 }
+
+
+# Config different queues for task priorities
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+# Disable normal Celery queue, to force using kombu.Queue
+CELERY_TASk_CREATE_MISSING_QUEUES = False
+
+CELERY_TASK_QUEUES = (
+    # need to define default queue here otherwise exception would be raised
+    Queue('default'),
+    Queue('high_priority'),
+    Queue('low_priority'),
+)
+
+# # Manual task routing
+# CELERY_TASK_ROUTES = {
+#     'django_celery.celery.*': {
+#         'queue': 'high_priority',
+#     },
+# }
+
+# dynamic task routing
+def route_task(name, args,kargs, options, task=None, **kw):
+    if ':' in name:
+        queue, _ = name.split(':')
+        return {'queue': queue}
+    return {'queue': 'default'}
+
+CELERY_TASK_ROUTES = (route_task,)
+
+

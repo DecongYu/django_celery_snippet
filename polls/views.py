@@ -1,20 +1,25 @@
 import json
 import random
+import time
+import logging
 
-import requests, logging
+import requests
+from string import ascii_lowercase
 from celery.result import AsyncResult
+
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
+from django.db import transaction
 
 from polls.forms import YourForm
-from polls.tasks import sample_task, task_process_notification
+from polls.tasks import sample_task, task_process_notification, task_send_welcome_email
 
 logger = logging.getLogger(__name__)
 
 
-# helpers
-
+# helper
 def api_call(email):
     
     # used for testing a failed api call
@@ -23,11 +28,14 @@ def api_call(email):
 
     # used for simulating a call to a third-party api
     requests.post('https://httpbin.org/delay/5')
+
+def random_username():
+    username = ''.join([random.choice(ascii_lowercase) for i in range(5)])
+    return username
     
 
 
 # views
-
 def subscribe(request):
     if request.method == 'POST':
         form = YourForm(request.POST)
@@ -93,3 +101,14 @@ def webhook_test2(request):
     task = task_process_notification.delay()
     logger.info(task.id)
     return HttpResponse('pong')
+
+def transaction_celery(request):
+    username = random_username()
+    user = User.objects.create_user(username, 'lennon@thebeatles.com', 'johnpassword')
+    logger.info(f'create user {user.pk}')
+    task_send_welcome_email.delay(user.pk)
+    # the task does not get called back utill after the transaction is comitted
+    transaction.on_commit(lambda: task_send_welcome_email.delay(user.pk))
+
+    time.sleep(1)
+    return HttpResponse('test')

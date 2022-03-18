@@ -11,7 +11,10 @@ def restart_celery():
         cmd = 'taskkill /f /t /im celery.exe'
     
     subprocess.call(shlex.split(cmd))
-    subprocess.call(shlex.split('celery -A django_celery worker --loglevel=info'))
+    subprocess.call(shlex.split(
+        'celery -A django_celery worker --loglevel=info -Q high_priority,default,low_priority'
+        )
+    )
 
 
 class Command(BaseCommand):

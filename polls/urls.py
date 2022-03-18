@@ -1,6 +1,6 @@
 from django.urls import path
 
-from polls.views import subscribe, task_status, webhook_test, webhook_test2, subscribe_ws
+from polls.views import subscribe, task_status, transaction_celery, webhook_test, webhook_test2, subscribe_ws
 
 
 urlpatterns = [
@@ -9,4 +9,5 @@ urlpatterns = [
     path('webhook_test/', webhook_test, name='webhook_test'),
     path('webhook_test2/', webhook_test2, name='webhook_test2'),
     path('form_ws/', subscribe_ws, name='form_ws'),
+    path('transaction_celery/', transaction_celery, name='transaction_celery'),
 ]
